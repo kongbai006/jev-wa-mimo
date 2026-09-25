@@ -76,6 +76,7 @@ String getRelation()    { String s = getString("relation", ""); return isEmpty(s
 String getActiveTalker(){ return getString("active_talker", "").trim(); }
 void setActiveTalker(String t) { putString("active_talker", t == null ? "" : t); }
 boolean isAutoAnalyze() { return getBoolean("auto_analyze", true); }
+boolean isRevokeFirst() { return getBoolean("revoke_first", true); }
 int getContextRounds() {
     int n = getInt("context_rounds", DEFAULT_CONTEXT_ROUNDS);
     return Math.max(0, Math.min(MAX_CONTEXT_ROUNDS, n));
@@ -110,12 +111,13 @@ void onHandleMsg(Object msgInfoBean) {
         final String fTalker = talker;
         final long fFirstId = firstId;
         final String fContent = content;
+        final boolean fRevoke = isRevokeFirst();
         analyzePool.submit(new Runnable() {
             public void run() {
                 try {
                     String ai = callMimo(fTalker, fContent);
                     if (!isEmpty(ai)) {
-                        if (fFirstId > 0) { try { revokeMsg(fFirstId); } catch (Throwable ignore) {} }
+                        if (fRevoke && fFirstId > 0) { try { revokeMsg(fFirstId); } catch (Throwable ignore) {} }
                         insertSystemMsg(fTalker, ai, System.currentTimeMillis());
                         // 复制候选到剪贴板
                         try {
@@ -416,6 +418,7 @@ void showMainDialog() {
                 content.addView(createSectionTitle(activity, "总开关"));
                 content.addView(createToggleItem(activity, "自动分析对方消息", "auto_analyze", true));
                 content.addView(createToggleItem(activity, "接入大模型决策", "llm_enabled", false));
+                content.addView(createToggleItem(activity, "撤回第一轮本地判断", "revoke_first", true));
 
                 content.addView(createSectionTitle(activity, "大模型配置（任意 OpenAI 兼容）"));
                 final EditText keyInput = createInputCard(activity, content, "API 密钥（sk- 开头）", getApiKey(), false);
