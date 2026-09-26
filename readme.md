@@ -1,52 +1,48 @@
 # Jev 聊天助手 · WA (WAuxiliary) 版
 
-适配 **WA（WAuxiliary_Plugin）** 微信框架的聊天辅助脚本。对方私聊发消息后，本地立刻判断意图 / 危险等级 / 情绪；可选接入**任意 OpenAI 兼容大模型**（小米 MiMo、DeepSeek、通义、智谱、OpenAI 等）给出建议和 3 条候选回复，候选自动复制到剪贴板，**手动粘贴发送，绝不自动发消息**。
-
-> 本项目**只适配 WA（WAuxiliary）微信模块**，需要自行把脚本导入 WA 才能使用。
-> QStory 版：[kongbai006/jev-qstory-mimo](https://github.com/kongbai006/jev-qstory-mimo)
-> Nuke 版：[kongbai006/jev-nuke-mimo](https://github.com/kongbai006/jev-nuke-mimo)
-
-## 使用前提
-
-- 手机微信已安装 **WA（WAuxiliary_Plugin）** 模块（Xposed 类，需 Root / LSPatch）；
-- 一个 **OpenAI 兼容** API Key（任意厂商，默认配的是小米 MiMo，可改成 DeepSeek/通义/智谱/OpenAI 等）。只用本地判断则不需要联网。
+本地秒判 + 可选接入任意 OpenAI 兼容大模型给聊天建议和 3 条候选回复，候选自动复制到剪贴板，手动粘贴发送。**绝不自动发消息**，只私聊不群聊。
 
 ## 安装
 
-1. 从 Release 下载 `Jev聊天助手WA_vX.X.zip`；
-2. 在 WA 里导入该脚本（含 `main.java` + `info.prop`）；
-3. 进入要分析的微信私聊，聊天框输入 `/jev` 打开配置页；
-4. 点「开启本会话」——**只有开启的会话才会分析**，同时只开一个；
-5. （可选）打开「接入大模型决策」，填 API 地址 / 密钥 / 模型。
+1. 解压到 WAuxiliary 的脚本目录，**脚本目录一个文件夹对应一个脚本**，文件夹叫什么 WA 里就显示什么。
+   - 正确：`<脚本目录>/jev/main.java` + `info.prop`
+   - 错误：把 main.java 直接丢在脚本根目录
+2. 在 WA 里刷新脚本列表，启用 Jev聊天助手WA版。
 
-## 配置项（聊天框输入 `/jev`）
+## 使用
 
-| 配置项 | 说明 |
-| --- | --- |
-| 作用域 | 开启/关闭当前会话，同时只开一个 |
-| 自动分析对方消息 | 总开关 |
-| 接入大模型决策 | 关=只本地秒判；开=再调大模型出建议+候选 |
-| API 密钥 | 任意厂商 `sk-` 密钥，默认空 |
-| API 地址 | OpenAI 兼容 `/v1` 地址；默认 MiMo `https://api.xiaomimimo.com/v1` |
-| 模型 | 模型名；默认 `mimo-v2.6-flash`，可改成 `deepseek-chat` / `qwen-plus` 等 |
-| 关系描述 | 默认「对方是我的关系亲密的对象」 |
-| 上下文轮数 | 0–30，取最近 N 条历史辅助判断，0=不取 |
-| 排版宽度 | 系统消息补全角空格宽度，0=自动，一般不用动 |
+1. 打开和对方的私聊窗口，输入 `/jev` 回车，点「开启本会话」作用域。
+2. 作用域开启 = 第一轮本地判断自动跑（秒出意图/危险/情绪）。
+3. 「第二轮决策开关（更聪明版）」= 是否调用大模型，关了就只用本地判断。
+4. 开了第二轮后：
+   - 「大模型分析前手动确认」：收到消息弹框，里面是「对方说 + 本地判断 + 是否分析」，点分析才调大模型；
+   - 「策略模式」：更完整策略 prompt，更准但更慢；
+   - 「撤回第一轮本地判断」：大模型结果出来后把之前的灰字撤回；
+   - 「关闭聊天灰字（结果只走弹窗）」：所有结果走弹窗，不往聊天里插灰字。
 
-## 常见厂商填法
+## 配置项
 
-| 厂商 | API 地址 | 模型示例 |
-| --- | --- | --- |
-| 小米 MiMo（默认） | `https://api.xiaomimimo.com/v1` | `mimo-v2.6-flash` |
-| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
-| 阿里通义 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-plus` |
-| 智谱 | `https://open.bigmodel.cn/api/paas/v4` | `glm-4-flash` |
-| OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` |
+| 字段 | 说明 |
+|---|---|
+| API 密钥 | sk- 开头 |
+| API 地址 | `/v1` 结尾，默认 `https://api.xiaomimimo.com/v1` |
+| 模型名 | 如 `deepseek-chat`、`qwen-plus`、`gpt-4o-mini` |
+| 聊天对象类型 | 不指定 / 男女朋友 / 想追的人 / 普通朋友 / 同事 / 客户 |
+| 关系补充说明 | 自由文本 |
+| 上下文轮数 | 0-30 |
 
-## 行为说明
+## v3.2 更新
 
-- 只分析单人私聊，群聊忽略；
-- 情绪分 开心 / 难过 / 生气，无匹配显示「平静」；
-- 候选回复**不会自动发**，会自动复制到系统剪贴板，在微信输入框长按粘贴后挑一条发；
-- 大模型返回时会先撤回本地那条系统消息（微信会提示"你撤回了一条消息"，这是微信自身行为，插件无法隐藏）；
-- 判断结果仅供娱乐参考，本工具不绕过任何平台安全机制。
+- 作用域 = 第一轮开关；下面 ToggleButton 改名「第二轮决策开关（更聪明版）」；
+- 配置界面折叠：打开第二轮才显示 API/模型等选项；
+- 合并弹窗：对方说 + 本地判断 + 是否分析 一个框搞定；
+- 新增「关闭聊天灰字」开关；
+- 修 bug：上下文轮数=0 不再发空消息；
+- 修 bug：弹窗不再混入历史分析结果；
+- 修 bug：WA 版历史消息读取反射方式错误导致大模型收到空内容；
+- 下拉框文字改白色。
+
+## 选模型建议
+
+- deepseek-chat / qwen-turbo / qwen-plus / gpt-4o-mini / mimo-v2.6-flash — 快，推荐
+- deepseek-reasoner / deepseek-v4-flash — 慢，日常不推荐
